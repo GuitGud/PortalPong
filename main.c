@@ -10,8 +10,9 @@
 #define BALL_SPEED    50
 #define PADDLE_SPEED  10
 #define SCORE_LIMIT   20
-#define PADDLE_INCREMENT (PADDLE_HEIGHT*2 / 5)
+#define PADDLE_INCREMENT (PADDLE_HEIGHT * 2 / 5) //usado para definir a velocidade da raquete
 #define PORTAL_HEIGHT 4
+#define PORTAL_WIDTH  2  //ajuste de width para corrijir um bug
 #define PORTAL_SPEED  1
 
 typedef struct {
@@ -31,12 +32,14 @@ typedef struct {
 void movePortal(Portal *portal) {
     portal->x += portal->dx;
 
-    // Verificar se o portal atingiu as bordas e inverter a direção se necessário
-    if (portal->x <= SCRSTARTX || portal->x >= SCRENDX - 2) {
+    // Check if the portal hit the left or right screen boundary
+    if (portal->x <= SCRSTARTX || portal->x >= SCRENDX - PORTAL_WIDTH) {
+        // Invert the direction to move in the opposite direction
         portal->dx = -portal->dx;
     }
 }
-//desenha a tela do jogo com os elementos dentro
+
+// Draw the game frame with the elements
 void drawFrame(Paddle paddle1, Paddle paddle2, Ball ball, Portal portalTop, Portal portalBottom, int score1, int score2) {
     screenClear();
 
@@ -58,9 +61,9 @@ void drawFrame(Paddle paddle1, Paddle paddle2, Ball ball, Portal portalTop, Port
     screenGotoxy(ball.x, ball.y);
     printf("o");
 
-    // Desenhar portais
+    // Draw portals
     for (int i = 0; i < PORTAL_HEIGHT; i++) {
-        screenGotoxy(portalTop.x, portalTop.y +2 + i);
+        screenGotoxy(portalTop.x, portalTop.y + 2 + i);
         printf("][");
         screenGotoxy(portalBottom.x, portalBottom.y + i);
         printf("][");
@@ -89,11 +92,10 @@ int main() {
     Paddle paddle1 = {SCRSTARTX, SCRENDY / 2 - PADDLE_HEIGHT / 2};
     Paddle paddle2 = {SCRENDX - PADDLE_WIDTH, SCRENDY / 2 - PADDLE_HEIGHT / 2};
 
-    // Altere as coordenadas iniciais dos portais para o centro da tela
-    Portal portalTop = {SCRENDX / 2, SCRENDY / 4, PORTAL_SPEED};
-    Portal portalBottom = {SCRENDX / 2, 3 * SCRENDY / 4 - PORTAL_HEIGHT, PORTAL_SPEED};
+    // Adjust the initial x positions of the portals
+    Portal portalTop = {SCRENDX / 4, SCRENDY / 4, PORTAL_SPEED};
+    Portal portalBottom = {SCRENDX / 4, 3 * SCRENDY / 4 - PORTAL_HEIGHT, PORTAL_SPEED};
 
-    // Ajuste a posição inicial da bola
     Ball ball = {SCRENDX / 2, SCRENDY / 2, -1, 1};
     int score1 = 0, score2 = 0;
 
@@ -112,6 +114,10 @@ int main() {
                 paddle2.y += PADDLE_INCREMENT;
             }
         }
+
+        // Move portals
+        movePortal(&portalTop);
+        movePortal(&portalBottom);
 
         // Update ball position
         ball.x += ball.dx;
@@ -140,17 +146,19 @@ int main() {
         }
 
         // Check for portal entry
-        if (ball.x == portalTop.x && ball.y >= portalTop.y && ball.y < portalTop.y + PORTAL_HEIGHT) {
+        if (ball.x >= portalTop.x && ball.x < portalTop.x + PORTAL_WIDTH &&
+            ball.y >= portalTop.y && ball.y < portalTop.y + PORTAL_HEIGHT) {
             ball.x = portalBottom.x;
-            ball.y = portalBottom.y + PORTAL_HEIGHT;
+            ball.y = portalBottom.y + PORTAL_HEIGHT / 2;
             ball.dy = -ball.dy;
-        } else if (ball.x == portalBottom.x && ball.y >= portalBottom.y && ball.y < portalBottom.y + PORTAL_HEIGHT) {
+        } else if (ball.x >= portalBottom.x && ball.x < portalBottom.x + PORTAL_WIDTH &&
+                   ball.y >= portalBottom.y && ball.y < portalBottom.y + PORTAL_HEIGHT) {
             ball.x = portalTop.x;
-            ball.y = portalTop.y - PORTAL_HEIGHT;
+            ball.y = portalTop.y + PORTAL_HEIGHT / 2;
             ball.dy = -ball.dy;
         }
 
-        // Reset scores if limit is reached
+        // Reset scores if the limit is reached
         if (score1 >= SCORE_LIMIT || score2 >= SCORE_LIMIT) {
             if (score1 >= SCORE_LIMIT) {
                 screenGotoxy(SCRENDX / 2 - 10, SCRENDY / 2);
@@ -167,12 +175,15 @@ int main() {
             break;
         }
 
+        // Draw the game frame
         drawFrame(paddle1, paddle2, ball, portalTop, portalBottom, score1, score2);
 
+        // Control game speed
         timerPrint();
         while (!timerTimeOver()) {}
     }
 
+    // Clean up
     keyboardDestroy();
     timerDestroy();
     screenDestroy();

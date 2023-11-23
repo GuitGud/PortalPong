@@ -4,6 +4,7 @@ Descrição:
 Este é um projeto desenvolvido como parte da disciplina de Programação Imperativa e Funcional. O PortalPong é uma variação do clássico jogo de arcade "Pong", mas com um diferencial emocionante: a presença de portais que podem surpreender os jogadores, alterando a direção da bola em momentos estratégicos.
 
 Funcionalidades Principais
+
 Raquete e Bola: O jogo apresenta duas raquetes controlados pelos jogadores e uma ou mais bolas em movimento na tela.
 
 Portais: Portais são adicionados à jogabilidade, permitindo que a bola passe as vezes de um portal para outro, alterando sua direção.

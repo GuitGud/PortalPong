@@ -1,5 +1,8 @@
 PortalPong
 
+Jogo feito na linguagem C para um projeto da cadeira de PIF(Programação Imperativa Funcional) da faculdade CESAR school
+professores: Pamela Bezerra e Tiago Barros
+
 Descrição:
 Este é um projeto desenvolvido como parte da disciplina de Programação Imperativa e Funcional. O PortalPong é uma variação do clássico jogo de arcade "Pong", mas com um diferencial emocionante: a presença de portais que podem surpreender os jogadores, alterando a direção da bola em momentos estratégicos.
 

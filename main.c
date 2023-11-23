@@ -122,7 +122,6 @@
                   bolas[i].x += bolas[i].dx;
                   bolas[i].y += bolas[i].dy;
 
-                  // Verificar entrada no portal
                   if (bolas[i].x >= portal_cima.x && bolas[i].x < portal_cima.x + LARGURA_DO_PORTAL &&
                       bolas[i].y >= portal_cima.y && bolas[i].y < portal_cima.y + ALTURA_DO_PORTAL) {
                       bolas[i].x = portal_baixo.x;
@@ -135,13 +134,11 @@
                       bolas[i].dy = -bolas[i].dy;
                   }
                 
-                  // Verificar colisões com Raquetes
                   if ((bolas[i].x == raquete1.x + 1 && bolas[i].y >= raquete1.y && bolas[i].y < raquete1.y + ALTURA_DAS_RAQUETES) ||
                       (bolas[i].x == raquete2.x - 1 && bolas[i].y >= raquete2.y && bolas[i].y < raquete2.y + ALTURA_DAS_RAQUETES)) {
                       bolas[i].dx = -bolas[i].dx;
                   }
-
-                  // Verificar colisões com paredes
+                
                   if (bolas[i].y <= SCRSTARTY || bolas[i].y >= SCRENDY) {
                       bolas[i].dy = -bolas[i].dy;
                   }

@@ -143,7 +143,6 @@
                       bolas[i].dy = -bolas[i].dy;
                   }
 
-                  // Verificar pontuação
                   if (bolas[i].x < SCRSTARTX) {
                       pontuacao2++;
                       bolas[i].x = SCRENDX / 2;

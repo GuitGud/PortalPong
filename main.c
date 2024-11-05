@@ -1,187 +1,120 @@
-  #include <stdio.h>
-  #include <stdlib.h>
-  #include <unistd.h>
-  #include "screen.h"
-  #include "keyboard.h"
-  #include "timer.h"
+#include <string.h>
+#include "screen.h"
+#include "keyboard.h"
+#include "timer.h"
 
-  #define MAXIMO_DE_BOLAS        5
-  #define ALTURA_DAS_RAQUETES    5
-  #define LARGURA_DAS_RAQUETES   1
-  #define VELOCIDADE_DA_BOLA     50
-  #define LIMITE_DE_PONTUACAO    20
-  #define ALTURA_DO_PORTAL       4
-  #define LARGURA_DO_PORTAL      2
-  #define VELOCIDADE_DO_PORTAL   1
-  #define CORRECAO_RAQUETE (ALTURA_DAS_RAQUETES * 2 / 5)
+#define ALTURA_DAS_RAQUETES 5
+#define CORRECAO_RAQUETE 1  
 
-  typedef struct {
-      int x, y;
-  } Raquete;
-  
-  typedef struct {
-      int x, y;
-      int dx, dy;
-  } Bola;
+typedef struct {
+    int x, y;
+} Raquete;
 
-  typedef struct {
-      int x, y;
-      int dx;
-  } Portal;
+int bolaX = 10, bolaY = 5;
+int direcaoX = 1, direcaoY = 1;
+Raquete raquete1 = {1, 10};  
+Raquete raquete2 = {78, 10}; 
+int pontuacao1 = 0, pontuacao2 = 0;
 
-  void mover_portais(Portal *portal) {
-      portal->x += portal->dx;
+void printPontuacao() {
+    screenSetColor(WHITE, DARKGRAY);
+    screenGotoxy(0, 0);
+    printf("Jogador 1: %d | Jogador 2: %d", pontuacao1, pontuacao2);
+}
 
-      if (portal->x <= SCRSTARTX || portal->x >= SCRENDX - LARGURA_DO_PORTAL) {
-          portal->dx = -portal->dx;
-      }
-  }
+void printRaquete(Raquete *raquete) {
+    screenSetColor(GREEN, DARKGRAY);
+    for (int i = 0; i < ALTURA_DAS_RAQUETES; i++) {
+        screenGotoxy(raquete->x, raquete->y + i);
+        printf("|");
+    }
+}
 
-  void printar_frame(Raquete *raquete1, Raquete *raquete2, Bola bolas[MAXIMO_DE_BOLAS], int numero_de_bolas, Portal *portal_cima, Portal *portal_baixo, int pontuacao1, int pontuacao2) {
-      screenClear();
+void clearRaquete(Raquete *raquete) {
+    for (int i = 0; i < ALTURA_DAS_RAQUETES; i++) {
+        screenGotoxy(raquete->x, raquete->y + i);
+        printf(" ");
+    }
+}
 
-      screenGotoxy(0, 0);
-      for (int i = 0; i < SCRENDX; i++) {
-          printf("-");
-      }
-    
-      for (int i = 0; i < ALTURA_DO_PORTAL; i++) {
-          screenGotoxy(portal_cima->x, portal_cima->y + 2 + i);
-          printf("][");
-          screenGotoxy(portal_baixo->x, portal_baixo->y + i);
-          printf("][");
-      }
-    
-      for (int i = 0; i < ALTURA_DAS_RAQUETES; i++) {
-          screenGotoxy(raquete1->x, raquete1->y + i);
-          printf("|");
-          screenGotoxy(raquete2->x, raquete2->y + i);
-          printf("|");
-      }
+void printBola(int nextBolaX, int nextBolaY) {
+    screenSetColor(WHITE, DARKGRAY);
+    screenGotoxy(bolaX, bolaY);
+    printf(" ");
 
-      for (int i = 0; i < numero_de_bolas; i++) {
-          screenGotoxy(bolas[i].x, bolas[i].y);
-          printf("o");
-      }
+    bolaX = nextBolaX;
+    bolaY = nextBolaY;
 
-      screenGotoxy(0, SCRENDY);
-      for (int i = 0; i < SCRENDX; i++) {
-          printf("-");
-      }
+    screenGotoxy(bolaX, bolaY);
+    printf("O");
+}
 
-      screenGotoxy(2, 1);
-      printf("Jogador 1: %2d | Jogador 2: %2d", pontuacao1, pontuacao2);
+int main() {
 
-      screenUpdate();
-  }
+    int ch = 0;
+    screenInit(1);
+    keyboardInit();
+    timerInit(50);
 
-  int main() {
-      screenInit(0);
-      keyboardInit();
-      timerInit(VELOCIDADE_DA_BOLA);
+    printPontuacao();
+    printRaquete(&raquete1);
+    printRaquete(&raquete2);
+    screenUpdate();
 
-      Raquete raquete1 = {SCRSTARTX, SCRENDY / 2 - ALTURA_DAS_RAQUETES / 2};
-      Raquete raquete2 = {SCRENDX - LARGURA_DAS_RAQUETES - 1, SCRENDY / 2 - ALTURA_DAS_RAQUETES / 2};
-      Portal portal_cima = {SCRENDX / 4, SCRENDY / 4, VELOCIDADE_DO_PORTAL};
-      Portal portal_baixo = {SCRENDX / 4, 3 * SCRENDY / 4 - ALTURA_DO_PORTAL, VELOCIDADE_DO_PORTAL};
+    while (ch != 10) {
+        if (keyhit()) {
+            ch = readch();
+            if (ch == 'w' && raquete1.y > 1) {
+                clearRaquete(&raquete1);
+                raquete1.y -= CORRECAO_RAQUETE;
+            } else if (ch == 's' && raquete1.y < SCRENDY - ALTURA_DAS_RAQUETES) {
+                clearRaquete(&raquete1);
+                raquete1.y += CORRECAO_RAQUETE;
+            } else if (ch == 'i' && raquete2.y > 1) {
+                clearRaquete(&raquete2);
+                raquete2.y -= CORRECAO_RAQUETE;
+            } else if (ch == 'k' && raquete2.y < SCRENDY - ALTURA_DAS_RAQUETES) {
+                clearRaquete(&raquete2);
+                raquete2.y += CORRECAO_RAQUETE;
+            }
+            screenUpdate();
+        }
 
-      Bola bolas[MAXIMO_DE_BOLAS];
-      int numero_de_bolas = 0;
+        if (timerTimeOver() == 1) {
+            int novaBolaX = bolaX + direcaoX;
+            int novaBolaY = bolaY + direcaoY;
 
-      int pontuacao1 = 0, pontuacao2 = 0;
+            if (novaBolaY <= 1 || novaBolaY >= SCRENDY - 1) direcaoY = -direcaoY;
 
-      int pausa = 0;
+            if ((novaBolaX == raquete1.x + 1 && novaBolaY >= raquete1.y && novaBolaY < raquete1.y + ALTURA_DAS_RAQUETES) ||
+                (novaBolaX == raquete2.x - 1 && novaBolaY >= raquete2.y && novaBolaY < raquete2.y + ALTURA_DAS_RAQUETES)) {
+                direcaoX = -direcaoX;
+            }
 
-      while (1) {
-          if (keyhit()) {
-              char tecla = readch();
-              if (tecla == 'w' && raquete1.y > SCRSTARTY + 1 && !pausa) {
-                  raquete1.y -= CORRECAO_RAQUETE;
-              } else if (tecla == 's' && raquete1.y < SCRENDY - ALTURA_DAS_RAQUETES && !pausa) {
-                  raquete1.y += CORRECAO_RAQUETE;
-              } else if (tecla == 'i' && raquete2.y > SCRSTARTY + 1 && !pausa) {
-                  raquete2.y -= CORRECAO_RAQUETE;
-              } else if (tecla == 'k' && raquete2.y < SCRENDY - ALTURA_DAS_RAQUETES && !pausa) {
-                  raquete2.y += CORRECAO_RAQUETE;
-              } else if (tecla == 'p') {
-                  pausa = !pausa;
-              } else if (tecla == 'b' && !pausa && numero_de_bolas < MAXIMO_DE_BOLAS) {
-                  bolas[numero_de_bolas].x = SCRENDX / 2;
-                  bolas[numero_de_bolas].y = SCRENDY / 2;
-                  bolas[numero_de_bolas].dx = -1;
-                  bolas[numero_de_bolas].dy = 1;
-                  numero_de_bolas++;
-              }
-          }
+            if (novaBolaX <= 0) {
+                pontuacao2++;
+                novaBolaX = SCRENDX / 2;
+                novaBolaY = SCRENDY / 2;
+                direcaoX = -direcaoX;
+                printPontuacao();
+            } else if (novaBolaX >= SCRENDX) {
+                pontuacao1++;
+                novaBolaX = SCRENDX / 2;
+                novaBolaY = SCRENDY / 2;
+                direcaoX = -direcaoX;
+                printPontuacao();
+            }
 
-          if (!pausa) {
-              mover_portais(&portal_cima);
-              mover_portais(&portal_baixo);
+            printBola(novaBolaX, novaBolaY);
+            printRaquete(&raquete1);
+            printRaquete(&raquete2);
+            screenUpdate();
+        }
+    }
 
-              for (int i = 0; i < numero_de_bolas; i++) {
-                  bolas[i].x += bolas[i].dx;
-                  bolas[i].y += bolas[i].dy;
+    keyboardDestroy();
+    screenDestroy();
+    timerDestroy();
 
-                  if (bolas[i].x >= portal_cima.x && bolas[i].x < portal_cima.x + LARGURA_DO_PORTAL &&
-                      bolas[i].y >= portal_cima.y && bolas[i].y < portal_cima.y + ALTURA_DO_PORTAL) {
-                      bolas[i].x = portal_baixo.x;
-                      bolas[i].y = portal_baixo.y + ALTURA_DO_PORTAL / 2;
-                      bolas[i].dy = -bolas[i].dy;
-
-                  } else if (bolas[i].x >= portal_baixo.x && bolas[i].x < portal_baixo.x + LARGURA_DO_PORTAL && bolas[i].y >= portal_baixo.y && bolas[i].y < portal_baixo.y + ALTURA_DO_PORTAL) {
-                      bolas[i].x = portal_cima.x;
-                      bolas[i].y = portal_cima.y + ALTURA_DO_PORTAL / 2;
-                      bolas[i].dy = -bolas[i].dy;
-                  }
-                
-                  if ((bolas[i].x == raquete1.x + 1 && bolas[i].y >= raquete1.y && bolas[i].y < raquete1.y + ALTURA_DAS_RAQUETES) ||
-                      (bolas[i].x == raquete2.x - 1 && bolas[i].y >= raquete2.y && bolas[i].y < raquete2.y + ALTURA_DAS_RAQUETES)) {
-                      bolas[i].dx = -bolas[i].dx;
-                  }
-                
-                  if (bolas[i].y <= SCRSTARTY || bolas[i].y >= SCRENDY) {
-                      bolas[i].dy = -bolas[i].dy;
-                  }
-
-                  if (bolas[i].x < SCRSTARTX) {
-                      pontuacao2++;
-                      bolas[i].x = SCRENDX / 2;
-                      bolas[i].y = SCRENDY / 2;
-                  } else if (bolas[i].x > SCRENDX) {
-                      pontuacao1++;
-                      bolas[i].x = SCRENDX / 2;
-                      bolas[i].y = SCRENDY / 2;
-                  }
-
-              }
-
-              if (pontuacao1 >= LIMITE_DE_PONTUACAO || pontuacao2 >= LIMITE_DE_PONTUACAO) {
-                  if (pontuacao1 >= LIMITE_DE_PONTUACAO) {
-                      screenGotoxy(SCRENDX / 3 - 10, SCRENDY / 2);
-                      printf("    Jogador 1 vence! Pressione qualquer tecla para sair.");
-                  } else {
-                      screenGotoxy(SCRENDX / 3 - 10, SCRENDY / 2);
-                      printf("    Jogador 2 vence! Pressione qualquer tecla para sair.");
-                  }
-
-                  screenUpdate();
-
-                  while (!keyhit()) {}
-                  break;
-              }
-
-              printar_frame(&raquete1, &raquete2, bolas, numero_de_bolas, &portal_cima, &portal_baixo, pontuacao1, pontuacao2);
-
-              while (!timerTimeOver()) {}
-          } else {
-              screenGotoxy(SCRENDX / 2 - 5, SCRENDY / 2);
-              printf("  Jogo pausa");
-              screenUpdate();
-          }
-      }
-      keyboardDestroy();
-      timerDestroy();
-      screenDestroy();
-
-  return 0;
-  }
+    return 0;
+}

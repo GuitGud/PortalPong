@@ -14,6 +14,12 @@
 #define VELOCIDADE_DO_PORTAL   1
 #define CORRECAO_RAQUETE       (ALTURA_DAS_RAQUETES * 2 / 5)
 
+// Define wall positions
+#define LEFT_WALL_X 1
+#define RIGHT_WALL_X (SCRENDX - 1)
+#define TOP_WALL_Y 1
+#define BOTTOM_WALL_Y (SCRENDY - 1)
+
 typedef struct {
     int x, y;
 } Raquete;
@@ -66,8 +72,22 @@ void printBola(Bola *bola) {
 }
 
 void clearBola(Bola *bola) {
-    screenGotoxy(bola->x, bola->y);
-    printf(" ");
+    int x = bola->x;
+    int y = bola->y;
+
+    if (x == LEFT_WALL_X || x == RIGHT_WALL_X) {
+        screenGotoxy(x, y);
+        printf("|");
+    } else if (y == TOP_WALL_Y || y == BOTTOM_WALL_Y) {
+        screenGotoxy(x, y);
+        printf("-");
+    } else if (y == 0) {
+        // Redraw score if ball was in score area
+        printPontuacao(0, 0);  // You may need to pass the actual scores here
+    } else {
+        screenGotoxy(x, y);
+        printf(" ");
+    }
 }
 
 void moverBola(Bola *bolas, int *numero_de_bolas, Raquete *raquete1, Raquete *raquete2, Portal *portal_cima, Portal *portal_baixo, int *pontuacao1, int *pontuacao2) {
@@ -78,7 +98,7 @@ void moverBola(Bola *bolas, int *numero_de_bolas, Raquete *raquete1, Raquete *ra
         int novaBolaY = bolas[i].y + bolas[i].dy;
 
         // Colisão com as bordas superior e inferior
-        if (novaBolaY <= 1 || novaBolaY >= SCRENDY - 1)
+        if (novaBolaY <= TOP_WALL_Y + 1 || novaBolaY >= BOTTOM_WALL_Y - 1)
             bolas[i].dy = -bolas[i].dy;
 
         // Colisão com as raquetes
@@ -101,12 +121,12 @@ void moverBola(Bola *bolas, int *numero_de_bolas, Raquete *raquete1, Raquete *ra
         }
 
         // Pontuação e reset da bola
-        if (novaBolaX <= 1) {  // Ajuste para considerar a parede esquerda
+        if (novaBolaX <= LEFT_WALL_X + 1) {
             (*pontuacao2)++;
             novaBolaX = SCRENDX / 2;
             novaBolaY = SCRENDY / 2;
             bolas[i].dx = -bolas[i].dx;
-        } else if (novaBolaX >= SCRENDX - 1) {  // Ajuste para considerar a parede direita
+        } else if (novaBolaX >= RIGHT_WALL_X - 1) {
             (*pontuacao1)++;
             novaBolaX = SCRENDX / 2;
             novaBolaY = SCRENDY / 2;
@@ -123,7 +143,7 @@ void moverBola(Bola *bolas, int *numero_de_bolas, Raquete *raquete1, Raquete *ra
 void moverPortais(Portal *portal) {
     portal->x += portal->dx;
 
-    if (portal->x <= 2 || portal->x >= SCRENDX - LARGURA_DO_PORTAL - 1)
+    if (portal->x <= LEFT_WALL_X + 1 || portal->x >= RIGHT_WALL_X - LARGURA_DO_PORTAL)
         portal->dx = -portal->dx;
 }
 
@@ -150,22 +170,22 @@ void printFrame() {
     screenSetColor(WHITE, DARKGRAY);
 
     // Desenhar parede superior
-    screenGotoxy(0, 0);
+    screenGotoxy(0, TOP_WALL_Y);
     for (int i = 0; i <= SCRENDX; i++) {
         printf("-");
     }
 
     // Desenhar parede inferior
-    screenGotoxy(0, SCRENDY);
+    screenGotoxy(0, BOTTOM_WALL_Y);
     for (int i = 0; i <= SCRENDX; i++) {
         printf("-");
     }
 
     // Desenhar paredes laterais
-    for (int y = 1; y < SCRENDY; y++) {
-        screenGotoxy(0, y);
+    for (int y = TOP_WALL_Y + 1; y < BOTTOM_WALL_Y; y++) {
+        screenGotoxy(LEFT_WALL_X, y);
         printf("|");
-        screenGotoxy(SCRENDX, y);
+        screenGotoxy(RIGHT_WALL_X, y);
         printf("|");
     }
 }
@@ -187,10 +207,10 @@ int main() {
         return 1;
     }
 
-    raquete1->x = 2;
-    raquete1->y = 10;
-    raquete2->x = SCRENDX - 2;
-    raquete2->y = 10;
+    raquete1->x = LEFT_WALL_X + 1;
+    raquete1->y = SCRENDY / 2 - ALTURA_DAS_RAQUETES / 2;
+    raquete2->x = RIGHT_WALL_X - 1;
+    raquete2->y = SCRENDY / 2 - ALTURA_DAS_RAQUETES / 2;
 
     bolas[0].x = SCRENDX / 2;
     bolas[0].y = SCRENDY / 2;
@@ -202,7 +222,7 @@ int main() {
     timerInit(VELOCIDADE_DA_BOLA);
 
     printPontuacao(pontuacao1, pontuacao2);
-    printFrame();  // Desenhar o frame inicial
+    printFrame();  // Draw the frame once
     printRaquete(raquete1);
     printRaquete(raquete2);
     printPortais(&portal_cima, &portal_baixo);
@@ -213,19 +233,19 @@ int main() {
         if (keyhit()) {
             ch = readch();
             if (!pausa) {
-                if (ch == 'w' && raquete1->y > 1) {
+                if (ch == 'w' && raquete1->y > TOP_WALL_Y + 1) {
                     clearRaquete(raquete1);
                     raquete1->y -= CORRECAO_RAQUETE;
                     printRaquete(raquete1);
-                } else if (ch == 's' && raquete1->y < SCRENDY - ALTURA_DAS_RAQUETES) {
+                } else if (ch == 's' && raquete1->y < BOTTOM_WALL_Y - ALTURA_DAS_RAQUETES) {
                     clearRaquete(raquete1);
                     raquete1->y += CORRECAO_RAQUETE;
                     printRaquete(raquete1);
-                } else if (ch == 'i' && raquete2->y > 1) {
+                } else if (ch == 'i' && raquete2->y > TOP_WALL_Y + 1) {
                     clearRaquete(raquete2);
                     raquete2->y -= CORRECAO_RAQUETE;
                     printRaquete(raquete2);
-                } else if (ch == 'k' && raquete2->y < SCRENDY - ALTURA_DAS_RAQUETES) {
+                } else if (ch == 'k' && raquete2->y < BOTTOM_WALL_Y - ALTURA_DAS_RAQUETES) {
                     clearRaquete(raquete2);
                     raquete2->y += CORRECAO_RAQUETE;
                     printRaquete(raquete2);
@@ -253,7 +273,6 @@ int main() {
             printPontuacao(pontuacao1, pontuacao2);
             printRaquete(raquete1);
             printRaquete(raquete2);
-            printFrame();  // Redesenhar o frame antes de atualizar a tela
 
             if (pontuacao1 >= LIMITE_DE_PONTUACAO || pontuacao2 >= LIMITE_DE_PONTUACAO) {
                 screenGotoxy(SCRENDX / 3 - 10, SCRENDY / 2);
@@ -269,7 +288,7 @@ int main() {
             screenUpdate();
         } else if (pausa) {
             screenGotoxy(SCRENDX / 2 - 5, SCRENDY / 2);
-            printf("  Jogo pausado");
+            printf("  Jogo pausado  ");
             screenUpdate();
         }
     }
